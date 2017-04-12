@@ -1,0 +1,318 @@
+--PLAYER LAST 200 Matches stats
+--Kills
+player_kills.avg player_kills_avg,
+player_kills.sum player_kills_sum,
+player_kills.min player_kills_min,
+player_kills.max player_kills_max,
+player_kills.stddev player_kills_std,
+
+--Deaths
+player_deaths.avg player_deaths_avg,
+player_deaths.sum player_deaths_sum,
+player_deaths.min player_deaths_min,
+player_deaths.max player_deaths_max,
+player_deaths.stddev player_deaths_std,
+
+--Assists
+player_assists.avg player_assists_avg,
+player_assists.sum player_assists_sum,
+player_assists.min player_assists_min,
+player_assists.max player_assists_max,
+player_assists.stddev player_assists_std,
+
+--gold_per_min
+player_gold_per_min.avg player_gold_per_min_avg,
+player_gold_per_min.sum player_gold_per_min_sum,
+player_gold_per_min.min player_gold_per_min_min,
+player_gold_per_min.max player_gold_per_min_max,
+player_gold_per_min.stddev player_gold_per_min_std,
+
+--xp_per_min
+player_xp_per_min.avg player_xp_per_min_avg,
+player_xp_per_min.sum player_xp_per_min_sum,
+player_xp_per_min.min player_xp_per_min_min,
+player_xp_per_min.max player_xp_per_min_max,
+player_xp_per_min.stddev player_xp_per_min_std
+
+
+FROM matches
+JOIN match_patch using(match_id)
+JOIN leagues using(leagueid)
+JOIN player_matches using(match_id)
+LEFT JOIN notable_players using(account_id)
+LEFT JOIN teams using(team_id)
+JOIN heroes ON player_matches.hero_id = heroes.id
+
+--Kills
+LEFT JOIN 
+    (
+    SELECT
+    notable_players.account_id ,
+    round(sum(deaths)::numeric/count(distinct matches.match_id), 2) avg,
+    count(distinct matches.match_id) count,
+    sum(case when (player_matches.player_slot < 128) = radiant_win then 1 else 0 end)::float/count(1) winrate,
+    sum(deaths) sum,
+    min(deaths) min,
+    max(deaths) max,
+    round(stddev(deaths), 2) stddev
+    FROM matches
+    JOIN match_patch using(match_id)
+    JOIN leagues using(leagueid)
+    JOIN player_matches using(match_id)
+    LEFT JOIN notable_players using(account_id)
+    LEFT JOIN teams using(team_id)
+    JOIN heroes ON player_matches.hero_id = heroes.id
+    WHERE TRUE
+    AND deaths IS NOT NULL
+    AND player_matches.account_id in 
+    (
+    311360822,
+    205813150,
+    106573901,
+    111620041,
+    149486894,
+    105248644,
+    86700461,
+    116585378,
+    173880329,
+    106863163,
+    101586543,
+    108484186,
+    113457795,
+    5150808,
+    12231202,
+    70388657,
+    250114507,
+    87586992,
+    154715080,
+    19757254,
+    86799300,
+    93119769,
+    107803494
+    )
+    AND matches.start_time >= 1483218000
+    GROUP BY notable_players.account_id
+    HAVING count(distinct matches.match_id) > 0
+    ORDER BY avg DESC,count DESC NULLS LAST
+    ) as player_kills
+ON player_matches.account_id = player_kills.account_id
+
+--Deaths
+LEFT JOIN 
+    (
+    SELECT
+    notable_players.account_id ,
+    round(sum(deaths)::numeric/count(distinct matches.match_id), 2) avg,
+    count(distinct matches.match_id) count,
+    sum(case when (player_matches.player_slot < 128) = radiant_win then 1 else 0 end)::float/count(1) winrate,
+    sum(deaths) sum,
+    min(deaths) min,
+    max(deaths) max,
+    round(stddev(deaths), 2) stddev
+    FROM matches
+    JOIN match_patch using(match_id)
+    JOIN leagues using(leagueid)
+    JOIN player_matches using(match_id)
+    LEFT JOIN notable_players using(account_id)
+    LEFT JOIN teams using(team_id)
+    JOIN heroes ON player_matches.hero_id = heroes.id
+    WHERE TRUE
+    AND deaths IS NOT NULL
+    AND player_matches.account_id in
+    (
+    311360822,
+    205813150,
+    106573901,
+    111620041,
+    149486894,
+    105248644,
+    86700461,
+    116585378,
+    173880329,
+    106863163,
+    101586543,
+    108484186,
+    113457795,
+    5150808,
+    12231202,
+    70388657,
+    250114507,
+    87586992,
+    154715080,
+    19757254,
+    86799300,
+    93119769,
+    107803494
+    )
+    AND matches.start_time >= 1483218000
+    GROUP BY notable_players.account_id
+    HAVING count(distinct matches.match_id) > 0
+    ORDER BY avg DESC,count DESC NULLS LAST
+    --LIMIT 200
+    ) as player_deaths
+ON player_matches.account_id = player_deaths.account_id
+
+--Assists
+LEFT JOIN 
+    (
+    SELECT
+    notable_players.account_id ,
+    round(sum(assists)::numeric/count(distinct matches.match_id), 2) avg,
+    count(distinct matches.match_id) count,
+    sum(case when (player_matches.player_slot < 128) = radiant_win then 1 else 0 end)::float/count(1) winrate,
+    sum(assists) sum,
+    min(assists) min,
+    max(assists) max,
+    round(stddev(assists), 2) stddev
+    FROM matches
+    JOIN match_patch using(match_id)
+    JOIN leagues using(leagueid)
+    JOIN player_matches using(match_id)
+    LEFT JOIN notable_players using(account_id)
+    LEFT JOIN teams using(team_id)
+    JOIN heroes ON player_matches.hero_id = heroes.id
+    WHERE TRUE
+    AND assists IS NOT NULL
+    AND player_matches.account_id in
+    (
+    311360822,
+    205813150,
+    106573901,
+    111620041,
+    149486894,
+    105248644,
+    86700461,
+    116585378,
+    173880329,
+    106863163,
+    101586543,
+    108484186,
+    113457795,
+    5150808,
+    12231202,
+    70388657,
+    250114507,
+    87586992,
+    154715080,
+    19757254,
+    86799300,
+    93119769,
+    107803494
+    )
+    AND matches.start_time >= 1483218000
+    GROUP BY notable_players.account_id
+    HAVING count(distinct matches.match_id) > 0
+    ORDER BY avg DESC,count DESC NULLS LAST
+    --LIMIT 200
+    ) as player_assists
+ON player_matches.account_id = player_assists.account_id
+
+--gold_per_min
+LEFT JOIN 
+    (
+    SELECT
+    notable_players.account_id ,
+    round(sum(gold_per_min)::numeric/count(distinct matches.match_id), 2) avg,
+    count(distinct matches.match_id) count,
+    sum(case when (player_matches.player_slot < 128) = radiant_win then 1 else 0 end)::float/count(1) winrate,
+    sum(gold_per_min) sum,
+    min(gold_per_min) min,
+    max(gold_per_min) max,
+    round(stddev(gold_per_min), 2) stddev
+    FROM matches
+    JOIN match_patch using(match_id)
+    JOIN leagues using(leagueid)
+    JOIN player_matches using(match_id)
+    LEFT JOIN notable_players using(account_id)
+    LEFT JOIN teams using(team_id)
+    JOIN heroes ON player_matches.hero_id = heroes.id
+    WHERE TRUE
+    AND gold_per_min IS NOT NULL
+    AND player_matches.account_id in
+    (
+    311360822,
+    205813150,
+    106573901,
+    111620041,
+    149486894,
+    105248644,
+    86700461,
+    116585378,
+    173880329,
+    106863163,
+    101586543,
+    108484186,
+    113457795,
+    5150808,
+    12231202,
+    70388657,
+    250114507,
+    87586992,
+    154715080,
+    19757254,
+    86799300,
+    93119769,
+    107803494
+    )
+    AND matches.start_time >= 1483218000
+    GROUP BY notable_players.account_id
+    HAVING count(distinct matches.match_id) > 0
+    ORDER BY avg DESC,count DESC NULLS LAST
+    --LIMIT 200
+    ) as player_gold_per_min
+ON player_matches.account_id = player_gold_per_min.account_id
+
+--xp_per_min
+LEFT JOIN 
+    (
+    SELECT
+    notable_players.account_id ,
+    round(sum(xp_per_min)::numeric/count(distinct matches.match_id), 2) avg,
+    count(distinct matches.match_id) count,
+    sum(case when (player_matches.player_slot < 128) = radiant_win then 1 else 0 end)::float/count(1) winrate,
+    sum(xp_per_min) sum,
+    min(xp_per_min) min,
+    max(xp_per_min) max,
+    round(stddev(xp_per_min), 2) stddev
+    FROM matches
+    JOIN match_patch using(match_id)
+    JOIN leagues using(leagueid)
+    JOIN player_matches using(match_id)
+    LEFT JOIN notable_players using(account_id)
+    LEFT JOIN teams using(team_id)
+    JOIN heroes ON player_matches.hero_id = heroes.id
+    WHERE TRUE
+    AND xp_per_min IS NOT NULL
+    AND player_matches.account_id in
+    (
+    311360822,
+    205813150,
+    106573901,
+    111620041,
+    149486894,
+    105248644,
+    86700461,
+    116585378,
+    173880329,
+    106863163,
+    101586543,
+    108484186,
+    113457795,
+    5150808,
+    12231202,
+    70388657,
+    250114507,
+    87586992,
+    154715080,
+    19757254,
+    86799300,
+    93119769,
+    107803494
+    )
+    AND matches.start_time >= 1483218000
+    GROUP BY notable_players.account_id
+    HAVING count(distinct matches.match_id) > 0
+    ORDER BY avg DESC,count DESC NULLS LAST
+    --LIMIT 200
+    ) as player_xp_per_min
+ON player_matches.account_id = player_xp_per_min.account_id
