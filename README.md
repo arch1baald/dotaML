@@ -1,5 +1,5 @@
 # dotaML
-Diploma work
+# Diploma work
 # Application of Machine Learning Methods to Analysis of Cyber-Sport Events
 ## Dmitry Savostyanov, 131
 
