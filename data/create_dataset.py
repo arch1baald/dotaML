@@ -189,15 +189,19 @@ def create_core_items_timings(df_matches):
 
 
 def create_first_kill_timing(df_matches):
-    for i, row in df_matches.iterrows():
-        df_matches.loc[i, 't_first_kill'] = 0
-        try:
-            t_first_kill = df_matches['kills_log'][i][0]['time']
-        except IndexError:
-            pass
-        if t_first_kill is not None:
-            df_matches.loc[i, 't_first_kill'] = t_first_kill
-    return df_matches
+    kill_logs = df_matches['kills_log']
+    t_first_kills = []
+    for kill_log in kill_logs:
+        if kill_log:
+            t_first_kill = kill_log[0]['time']
+            t_first_kills.append(t_first_kill)
+        else:
+            t_first_kills.append(None)
+    return t_first_kills
+
+
+def create_observers_log(df_matches):
+    
 
 
 def create_dataset():
@@ -208,8 +212,7 @@ def create_dataset():
         datetime.datetime.fromtimestamp(x).strftime('%d.%m.%Y %H:%M:%S'))
     items = create_core_items_timings(df_matches)
     df_matches = df_matches.merge(items, left_on='id', right_on='id', how='inner')
-    df_matches = create_first_kill_timing(df_matches)
-    print(df_matches['t_first_kill'])
+    df_matches['t_first_kill'] = create_first_kill_timing(df_matches)
 
 
 if __name__ == '__main__':
