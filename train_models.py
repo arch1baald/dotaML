@@ -37,6 +37,14 @@ def data_preparation(df, id_columns):
     return X_train, X_test, y_train, y_test
 
 
+def save_models(models):
+    for role, model_obj in models.items():
+        file_name = 'model_{}.sklearn'.format(role)
+        file_path = os.path.join(os.path.abspath('data'), file_name)
+        with open(file_path, 'wb') as model_file:
+            pickle.dump(model_obj, model_file)
+
+
 def train_models():
     df_matches = pd.read_csv('./data/dataset.csv', index_col=0)
     id_columns = [
@@ -45,14 +53,14 @@ def train_models():
         'win'
     ]
 
-    model = {}
+    model_by_role = {}
     for role, df_role in df_matches.groupby('lane_role'):
         print('Model for role: {}'.format(role))
         X_train, X_test, y_train, y_test = data_preparation(df_role, id_columns)
 
         lm = LogisticRegression(penalty='l1', C=1, fit_intercept=False)
         lm.fit(X_train, y_train)
-        model[role] = lm
+        model_by_role[role] = lm
 
         print("Train accuracy = %s" % metrics.accuracy_score(y_train, lm.predict(X_train)))
         print("Test accuracy = %s" % metrics.accuracy_score(y_test, lm.predict(X_test)))
@@ -63,12 +71,7 @@ def train_models():
         print("Train Precision = %s" % metrics.precision_score(y_train, lm.predict(X_train)))
         print("Test Precision = %s" % metrics.precision_score(y_test, lm.predict(X_test)))
         print()
-
-    for role, model_obj in model.items():
-        file_name = 'model_{}.sklearn'.format(role)
-        file_path = os.path.join(os.path.abspath('data'), file_name)
-        with open(file_path, 'wb') as model_file:
-            pickle.dump(model_obj, model_file)
+    save_models(model_by_role)
 
 
 if __name__ == '__main__':

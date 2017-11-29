@@ -8,7 +8,7 @@ import pandas as pd
 
 
 QUERY = None
-with open('query.sql', 'r') as sql_file:
+with open('local_odota_optimized.sql', 'r') as sql_file:
     QUERY = sql_file.read()
 
 # For missings
@@ -24,20 +24,6 @@ DEFAULT_VALUES = {
     'multi_': INTEGER_MISSING,
     'hero_': 0,
 }
-
-
-def download_google_spreadsheet(url):
-    try:
-        resp = requests.get(url)
-        resp.raise_for_status()
-        content_bytes = resp.content
-    except requests.exceptions.HTTPError as err:
-        print(err, file=sys.stderr)
-    try:
-        content = pd.read_csv(io.BytesIO(content_bytes))
-        return content
-    except Exception as err:
-        print("failed to convert bytes to csv:", err, file=sys.stderr)
 
 
 def query_opendota(sql):
@@ -145,6 +131,23 @@ def aggregate_by_times(log, log_name, times=None):
     return aggregations
 
 
+def aggregate_array_of_ints_by_times(array_of_ints_log, log_name, times=None):
+    if times is None:
+        max_min = 31
+        period = 3
+        times = list(range(0, max_min, period))
+    if isinstance(array_of_ints_log, str):
+        array_of_ints_log = eval(array_of_ints_log)
+    aggregation = {}
+    for t in times:
+        try:
+            agg_name = 't_{}_{}_{}'.format(log_name, t, 'sum')
+            aggregation[agg_name] = array_of_ints_log[t]
+        except IndexError:
+            pass
+    return aggregation
+
+
 # From column of dicts the function creates columns with dict keys as names
 def create_aggregations_from_logs(df_matches):
     df_observers = df_matches['obs_log'].apply(lambda log: aggregate_by_times(log, 'obs')).apply(pd.Series)
@@ -153,10 +156,10 @@ def create_aggregations_from_logs(df_matches):
     df_buyback = df_matches['buyback_log'].apply(lambda log: aggregate_by_times(log, 'buybacks'))
     df_kills = df_matches['kills_log'].apply(lambda log: aggregate_by_times(log, 'kills')).apply(pd.Series)
     df_gold_reasons = df_matches['gold_reasons'].apply(pd.Series)
-    df_hero_roles = df_matches['role_log'].apply(
-        lambda roles:
-        {'hero_role_{}'.format(role.lower()): 1 for role in roles}
-    ).apply(pd.Series)
+    # df_hero_roles = df_matches['role_log'].apply(
+    #     lambda roles:
+    #     {'hero_role_{}'.format(role.lower()): 1 for role in roles}
+    # ).apply(pd.Series)
     for col in df_gold_reasons.columns:
         df_gold_reasons.rename(columns={col: '{}_{}'.format('gold_reason', col)}, inplace=True)
     df_xp_reasons = df_matches['xp_reasons'].apply(pd.Series)
@@ -173,19 +176,32 @@ def create_aggregations_from_logs(df_matches):
     for col in df_multi_kills.columns:
         df_multi_kills.rename(columns={col: '{}_{}'.format('multi_kill', col)}, inplace=True)
 
-    df_matches['pings'] = df_matches['ping_log'].apply(lambda dct: dct.get('0'))
-    #TODO: add the rest jsons
+    # df_matches['pings'] = df_matches['ping_log'].apply(lambda dct: dct.get('0'))
+    df_gold = df_matches['gold_t'].apply(lambda log: aggregate_array_of_ints_by_times(log, 'gold')).apply(pd.Series)
+    df_lh = df_matches['lh_t'].apply(lambda log: aggregate_array_of_ints_by_times(log, 'lasthits')).apply(pd.Series)
+    df_xp = df_matches['xp_t'].apply(lambda log: aggregate_array_of_ints_by_times(log, 'expireance')).apply(pd.Series)
+
     df_matches = pd.concat([
         df_matches, df_observers, df_sentries,
         df_runes, df_buyback, df_kills,
         df_gold_reasons, df_xp_reasons, df_kill_streaks,
-        df_multi_kills, df_hero_roles,
+        df_multi_kills,
+        # df_hero_roles,
+        df_gold,
+        df_lh,
+        df_xp,
     ], axis=1)
     df_matches.drop([
         'obs_log', 'sen_log',
         'runes_log', 'buyback_log', 'kills_log',
         'gold_reasons', 'xp_reasons', 'kill_streaks',
-        'multi_kills', 'ping_log', 'role_log'
+        'multi_kills',
+        # 'role_log',
+        # 'ping_log',
+        'gold_t',
+        'lh_t',
+        'xp_t',
+
     ], axis=1, inplace=True)
     return df_matches
 
